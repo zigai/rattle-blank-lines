@@ -1,0 +1,219 @@
+[project]
+name = "flake8_blank_lines"
+version = "0.1.0"
+description = ""
+authors = [{name = "zigai", email = "ziga.ivansek@gmail.com"}]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Typing :: Typed",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+
+keywords = [
+    "flake8_blank_lines"
+]
+
+[project.optional-dependencies]
+test = ["pytest", "coverage"]
+dev = ["pytest", "coverage", "ruff", "pre-commit", "mypy", "codespell"]
+
+[project.urls]
+Repository = "https://github.com/zigai/flake8-blank-lines"
+Issues = "https://github.com/zigai/flake8-blank-lines/issues"
+Homepage = "https://github.com/zigai/flake8-blank-lines"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.envs.test]
+features = ["test"]
+installer = "uv"
+
+[[tool.hatch.envs.test.matrix]]
+python = [
+    "3.12",
+    "3.13",
+    "3.14",
+]
+
+[tool.hatch.envs.test.scripts]
+test = "pytest {args}"
+cov = "coverage run -m pytest {args}"
+
+[tool.hatch.build.targets.wheel]
+packages = ["flake8_blank_lines"]
+
+[tool.coverage.run]
+source = ["flake8_blank_lines"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    'pragma: no cover',
+    'raise NotImplementedError',
+    'if TYPE_CHECKING:',
+    'if typing.TYPE_CHECKING:',
+]
+omit = [
+    "tests/*",
+    "tests/**",
+]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["flake8_blank_lines"]
+exclude = ["^tests/"]
+
+disallow_untyped_defs = true
+disallow_untyped_calls = true
+disallow_any_generics = true
+no_implicit_optional = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_configs = true
+strict_equality = true
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "ERA",
+    "FBT002",
+    "COM",
+    "CPY",
+    "DJ",
+    "ANN003",
+    "FIX",
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    "D205",
+    "D203",
+    "D212",
+    "E501",
+    "PIE804",
+    "S101",
+    "EM101",
+    "PYI041",
+    "PYI051",
+    "PYI046",
+    "PYI047",
+    "PYI049",
+    "PYI053",
+    "PYI054",
+    "RET501",
+    "SIM910",
+    "N812",
+    "PLC0415",
+    "PLR0904",
+    "PLR0913",
+    "PLR2004",
+    "PLR1711",
+    "TRY003",
+    "T20",
+    "SIM105",
+    "RET504",
+    "PLR0912",
+    "PLR0915",
+    "TD",
+    "TC001",
+    "TC002",
+    "TC003",
+    "TC006",
+    "PLW0603",
+    "EM102",
+    "PLW2901",
+    "RSE102",
+    "PGH004",
+    "N806",
+    "FBT001",
+]
+exclude = ["build"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = [
+    "F401", # Unused import
+    "E402", # Module import not at top of file
+]
+"**/tests/**/*.py" = [
+    "S104",
+    "S105",
+    "S106",
+    "TRY004",
+    "RUF003",
+    "RUF012",
+    "UP031",
+    "SLF001",
+    "ARG",
+    "N806",
+    "ANN001",
+    "ANN201",
+    "ANN202",
+    "ANN204",
+    "ANN401",
+    "S",
+    "INP001",
+    "PLW0108",
+    "EM102",
+    "FBT001",
+    "SIM300",
+    "FLY002",
+    "A002",
+    "A004",
+]
+"examples/*.py" = ["INP001"]
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = [
+    "pydantic.validator",
+    "declared_attr",
+    "expression",
+    "comparator",
+]
+
+[tool.ruff.lint.flake8-builtins]
+ignorelist = ["id", "input"]
+
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "sqlalchemy.orm.DeclarativeBase",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"
+
+[tool.ruff.lint.isort]
+known-first-party = ["flake8_blank_lines", "tests"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.codespell]
+skip = '.git,uv.lock'
