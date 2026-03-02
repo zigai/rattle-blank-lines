@@ -58,7 +58,8 @@ def f() -> int:
 ```
 
 ### BlankLineBeforeAssignment (BL210)
-Requires a separator before an assignment when it follows a non-assignment statement.
+Requires a separator before an assignment when it follows a non-assignment statement,
+except when the assignment directly follows a suite docstring.
 
 Before:
 ```python
@@ -101,6 +102,7 @@ def f(value: int) -> int:
 
 ### BlockHeaderCuddleRelaxed (BL300)
 Allows assignment-before-block cuddling only when the final prep assignment feeds the block header or first body statement.
+The first statement after a suite docstring is exempt (Ruff `D202` compatibility).
 
 Before:
 ```python
@@ -125,6 +127,7 @@ def f(value: int) -> int:
 
 ### BlockHeaderCuddleStrict (BL301)
 Stricter cuddle mode: only the immediately previous assignment may feed the block header.
+The first statement after a suite docstring is exempt (Ruff `D202` compatibility).
 
 Before:
 ```python
