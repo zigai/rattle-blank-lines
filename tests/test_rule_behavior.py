@@ -53,6 +53,7 @@ def _run_rule(rule_cls: type[LintRule], source: str) -> tuple[LintRunner, list]:
     path = Path("fixture.py")
     runner = LintRunner(path, _dedent(source).encode())
     reports = list(runner.collect_violations([rule_cls()], Config(path=path)))
+
     return runner, reports
 
 
