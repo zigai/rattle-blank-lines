@@ -1,12 +1,12 @@
 [project]
-name = "flake8_blank_lines"
+name = "fixit-blank-lines"
 version = "0.1.0"
-description = ""
-authors = [{name = "zigai", email = "ziga.ivansek@gmail.com"}]
+description = "Reusable Fixit rules for blank-line and statement cuddling policies."
+authors = [{ name = "zigai", email = "ziga.ivansek@gmail.com" }]
 license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["fixit>1"]
 
 classifiers = [
     "License :: OSI Approved :: MIT License",
@@ -22,13 +22,19 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 
-keywords = [
-    "flake8_blank_lines"
-]
+keywords = ["fixit", "lint", "blank-lines", "autofix"]
 
 [project.optional-dependencies]
-test = ["pytest", "coverage"]
-dev = ["pytest", "coverage", "ruff", "pre-commit", "mypy", "codespell"]
+test = ["pytest", "coverage", "fixit>1"]
+dev = [
+    "pytest",
+    "coverage",
+    "ruff",
+    "pre-commit",
+    "mypy",
+    "codespell",
+    "fixit>1",
+]
 
 [project.urls]
 Repository = "https://github.com/zigai/flake8-blank-lines"
@@ -44,21 +50,17 @@ features = ["test"]
 installer = "uv"
 
 [[tool.hatch.envs.test.matrix]]
-python = [
-    "3.12",
-    "3.13",
-    "3.14",
-]
+python = ["3.12", "3.13", "3.14"]
 
 [tool.hatch.envs.test.scripts]
 test = "pytest {args}"
 cov = "coverage run -m pytest {args}"
 
 [tool.hatch.build.targets.wheel]
-packages = ["flake8_blank_lines"]
+packages = ["fixit_blank_lines"]
 
 [tool.coverage.run]
-source = ["flake8_blank_lines"]
+source = ["fixit_blank_lines"]
 branch = true
 
 [tool.coverage.report]
@@ -68,14 +70,11 @@ exclude_lines = [
     'if TYPE_CHECKING:',
     'if typing.TYPE_CHECKING:',
 ]
-omit = [
-    "tests/*",
-    "tests/**",
-]
+omit = ["tests/*", "tests/**"]
 
 [tool.mypy]
 python_version = "3.12"
-files = ["flake8_blank_lines"]
+files = ["fixit_blank_lines"]
 exclude = ["^tests/"]
 
 disallow_untyped_defs = true
@@ -158,6 +157,10 @@ exclude = ["build"]
     "F401", # Unused import
     "E402", # Module import not at top of file
 ]
+"fixit_blank_lines/rules/*.py" = [
+    "N802",   # LibCST visitor hooks use framework-defined names like visit_Module.
+    "RUF012", # Fixit expects class-level VALID/INVALID fixtures on rule classes.
+]
 "**/tests/**/*.py" = [
     "S104",
     "S105",
@@ -210,10 +213,16 @@ skip-magic-trailing-comma = false
 line-ending = "lf"
 
 [tool.ruff.lint.isort]
-known-first-party = ["flake8_blank_lines", "tests"]
+known-first-party = ["fixit_blank_lines", "tests"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.codespell]
 skip = '.git,uv.lock'
+
+[tool.fixit]
+root = true
+enable = ["fixit_blank_lines.rules"]
+disable = ["fixit.rules", "fixit_blank_lines.rules:BlockHeaderCuddleStrict"]
+python-version = "3.12"
