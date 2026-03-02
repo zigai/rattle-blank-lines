@@ -25,6 +25,7 @@ disable = [
 ]
 ```
 
+
 Run linting and autofix:
 
 ```sh
@@ -57,26 +58,6 @@ def f() -> int:
     return value
 ```
 
-### BlankLineBeforeAssignment (BL210)
-Requires a separator before an assignment when it follows a non-assignment statement,
-except when the assignment directly follows a suite docstring.
-
-Before:
-```python
-def f() -> int:
-    log_start()
-    value = compute()
-    return value
-```
-
-After:
-```python
-def f() -> int:
-    log_start()
-
-    value = compute()
-    return value
-```
 
 ### BlankLineBeforeBranchInLargeSuite (BL200)
 In suites larger than 2 non-empty lines, requires a blank line before `return`/`raise`/`break`/`continue`.
@@ -169,6 +150,27 @@ def f(value: int) -> int:
     if value > 0:
         value += 1
 
+    return value
+```
+
+### BlankLineBeforeAssignment (BL210, disabled by default)
+Requires a separator before an assignment when it follows a non-assignment statement,
+except when the assignment directly follows a suite docstring.
+
+Before:
+```python
+def f() -> int:
+    log_start()
+    value = compute()
+    return value
+```
+
+After:
+```python
+def f() -> int:
+    log_start()
+
+    value = compute()
     return value
 ```
 
