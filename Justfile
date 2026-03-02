@@ -11,12 +11,13 @@ _require-hatch:
 lint:
   ruff check
 
+
 # format code
 format:
   ruff format
 
 # fix automatically fixable linting issues
-fix:
+fix: _require-uv
   ruff check --fix
 
 # run tests across all supported Python versions

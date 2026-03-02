@@ -8,8 +8,17 @@ repos:
       - id: check-toml
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.2
+    rev: v0.15.4
     hooks:
       - id: ruff-check
         args: [--fix, --exit-zero]
       - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: fixit-lint
+        name: fixit lint
+        entry: uv run fixit lint
+        language: system
+        types: [python]
+        files: ^fixit_blank_lines/
