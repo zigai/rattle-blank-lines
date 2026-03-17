@@ -4,13 +4,21 @@ from collections.abc import Sequence
 
 import libcst as cst
 from fixit import Invalid, LintRule, Valid
+from libcst.metadata import ParentNodeProvider
 
 from fixit_blank_lines.rules.base import BaseBlankLinesRule
-from fixit_blank_lines.utils import assignment_small_statement, has_separator, prepend_blank_line
+from fixit_blank_lines.utils import (
+    assignment_small_statement,
+    has_separator,
+    is_control_block_statement,
+    prepend_blank_line,
+)
 
 
 class BlankLineBeforeAssignment(BaseBlankLinesRule, LintRule):
     """Require separators before assignment lines after non-assignment lines."""
+
+    SHORT_CONTROL_FLOW_MAX_STATEMENTS = 3
 
     MESSAGE = (
         "BL210 Missing blank line before assignment statement "
@@ -51,6 +59,23 @@ class BlankLineBeforeAssignment(BaseBlankLinesRule, LintRule):
                 return value
             '''
         ),
+        Valid(
+            """
+            def f(backend: object, archiver: object, writer: object) -> None:
+                if needs_status:
+                    log_status(backend=backend, archiver=archiver, writer=writer)
+                    last_status_time = loop.time()
+            """
+        ),
+        Valid(
+            """
+            def f() -> None:
+                if needs_status:
+                    log_status()
+                    update_metrics()
+                    last_status_time = loop.time()
+            """
+        ),
     ]
     INVALID = [
         Invalid(
@@ -89,23 +114,60 @@ class BlankLineBeforeAssignment(BaseBlankLinesRule, LintRule):
             """,
             expected_message=MESSAGE,
         ),
+        Invalid(
+            """
+            def f(value: int) -> int:
+                if value > 0:
+                    log_status(value)
+                    update_metrics(value)
+                    adjusted = value + 1
+                    return adjusted
+
+                return value
+            """,
+            expected_replacement="""
+            def f(value: int) -> int:
+                if value > 0:
+                    log_status(value)
+                    update_metrics(value)
+
+                    adjusted = value + 1
+                    return adjusted
+
+                return value
+            """,
+            expected_message=MESSAGE,
+        ),
     ]
 
     def visit_Module(self, node: cst.Module) -> None:
         self._set_source_lines(node)
-        self._check_suite_body(node.body, suite_can_have_docstring=True)
+        self._check_suite_body(
+            node.body,
+            suite_can_have_docstring=True,
+            skip_short_control_flow_suite=False,
+        )
 
     def visit_IndentedBlock(self, node: cst.IndentedBlock) -> None:
+        parent = self.get_metadata(ParentNodeProvider, node)
         self._check_suite_body(
             node.body,
             suite_can_have_docstring=self._suite_can_have_docstring(node),
+            skip_short_control_flow_suite=(
+                is_control_block_statement(parent)
+                and len(node.body) <= self.SHORT_CONTROL_FLOW_MAX_STATEMENTS
+            ),
         )
 
     def _check_suite_body(
         self,
         body: Sequence[cst.BaseStatement],
         suite_can_have_docstring: bool,
+        skip_short_control_flow_suite: bool,
     ) -> None:
+        if skip_short_control_flow_suite:
+            return
+
         if len(body) < 2:
             return
 
