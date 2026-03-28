@@ -89,7 +89,7 @@ def f(value: int) -> int:
 ```
 
 ### BlockHeaderCuddleRelaxed (BL300)
-Allows cuddling before a block when the preceding setup directly feeds that block.
+Allows cuddling before a block when the setup still belongs to the same step.
 The first statement after a suite docstring is exempt.
 
 Before:
@@ -111,6 +111,15 @@ def f(value: int) -> int:
         return value
 
     return 0
+```
+
+Also allowed:
+```python
+def f(override_name: str | None) -> str:
+    display_name = "guest"
+    if override_name is not None:
+        display_name = override_name
+    return display_name
 ```
 
 ### BlockHeaderCuddleStrict (BL301)
