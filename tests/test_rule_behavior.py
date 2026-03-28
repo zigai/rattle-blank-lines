@@ -157,3 +157,151 @@ def test_rule_settings_resolve_from_code_selectors() -> None:
         BlankLineBeforeAssignment: {"short_control_flow_max_statements": 1},
         MatchCaseSeparation: {"max_case_non_empty_lines": 5},
     }
+
+
+def test_bl200_reports_branch_keyword_instead_of_full_multiline_return() -> None:
+    _, reports = _run_rule(
+        BlankLineBeforeBranchInLargeSuite,
+        """
+        def f(value: int) -> dict[str, int]:
+            first = value + 1
+            second = first + 1
+            return {
+                "first": first,
+                "second": second,
+            }
+        """,
+        {"allow_related_return_tails": False},
+    )
+
+    assert len(reports) == 1
+    report = reports[0]
+    assert report.range.start.line == 4
+    assert report.range.end.line == 4
+    assert report.range.end.column - report.range.start.column == len("return")
+
+
+def test_bl210_reports_first_line_of_multiline_assignment() -> None:
+    _, reports = _run_rule(
+        BlankLineBeforeAssignment,
+        """
+        def f(value: int) -> dict[str, int]:
+            log_value(value)
+            payload = {
+                "value": value,
+            }
+            return payload
+        """,
+    )
+
+    assert len(reports) == 1
+    report = reports[0]
+    assert report.range.start.line == 3
+    assert report.range.end.line == 3
+
+
+def test_bl300_reports_block_header_line_only() -> None:
+    _, reports = _run_rule(
+        BlockHeaderCuddleRelaxed,
+        """
+        def f(default_value: object) -> object:
+            prepared = default_value
+            if default_value:
+                log(default_value)
+            return prepared
+        """,
+    )
+
+    assert len(reports) == 1
+    report = reports[0]
+    assert report.range.start.line == 3
+    assert report.range.end.line == 3
+    assert report.range.end.column - report.range.start.column == len("if")
+
+
+def test_bl300_allows_same_result_slot_guarded_overwrite() -> None:
+    _, reports = _run_rule(
+        BlockHeaderCuddleRelaxed,
+        """
+        def f(override_name: str | None) -> str:
+            display_name = "guest"
+            if override_name is not None:
+                display_name = override_name
+            return display_name
+        """,
+    )
+
+    assert reports == []
+
+
+def test_bl300_allows_container_initialized_before_guarded_mutation() -> None:
+    _, reports = _run_rule(
+        BlockHeaderCuddleRelaxed,
+        """
+        def f(default_value: object) -> dict[str, object]:
+            prompt_kwargs: dict[str, object] = {}
+            if default_value:
+                prompt_kwargs["placeholder"] = str(default_value)
+            return prompt_kwargs
+        """,
+    )
+
+    assert reports == []
+
+
+def test_bl300_allows_immediate_same_receiver_setup_and_guard() -> None:
+    _, reports = _run_rule(
+        BlockHeaderCuddleRelaxed,
+        """
+        def f() -> None:
+            session = build_session()
+            session.refresh()
+            if session.is_stale():
+                reset_session(session)
+                return
+            cleanup()
+        """,
+    )
+
+    assert reports == []
+
+
+def test_bl350_reports_first_line_of_following_multiline_statement() -> None:
+    _, reports = _run_rule(
+        BlankLineAfterControlBlock,
+        """
+        def f(value: int) -> dict[str, int]:
+            if value > 0:
+                value += 1
+            return {
+                "value": value,
+            }
+        """,
+    )
+
+    assert len(reports) == 1
+    report = reports[0]
+    assert report.range.start.line == 4
+    assert report.range.end.line == 4
+
+
+def test_bl400_reports_case_keyword_only() -> None:
+    _, reports = _run_rule(
+        MatchCaseSeparation,
+        """
+        def f(value: int) -> int:
+            match value:
+                case 1:
+                    first = 1
+                    second = 2
+                    third = 3
+                case _:
+                    return 0
+        """,
+    )
+
+    assert len(reports) == 1
+    report = reports[0]
+    assert report.range.start.line == 7
+    assert report.range.end.line == 7
+    assert report.range.end.column - report.range.start.column == len("case")
