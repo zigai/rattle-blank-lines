@@ -7,11 +7,11 @@ The project keeps the historical `fixit_blank_lines` package path for compatibil
 ## Installation
 
 ```sh
-pip install "git+https://github.com/zigai/rattle-blank-lines.git"
+pip install rattle-blank-lines
 ```
 
 ```sh
-uv add "git+https://github.com/zigai/rattle-blank-lines.git"
+uv add rattle-blank-lines
 ```
 
 ## Quick Start
