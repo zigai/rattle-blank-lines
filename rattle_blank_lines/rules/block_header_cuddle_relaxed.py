@@ -9,7 +9,7 @@ from rattle_blank_lines.rules.base import BaseBlockHeaderCuddleRule, validate_no
 
 
 class BlockHeaderCuddleRelaxed(BaseBlockHeaderCuddleRule, LintRule):
-    """Allow cuddling only when preceding setup directly feeds the next block."""
+    """Allow cuddling when the setup remains part of the same control-flow step."""
 
     CODE = "BL300"
     ALIASES = ("BlockHeaderCuddleRelaxed",)
@@ -133,6 +133,35 @@ class BlockHeaderCuddleRelaxed(BaseBlockHeaderCuddleRule, LintRule):
                 return candidate
             """
         ),
+        Valid(
+            """
+            def f(override_name: str | None) -> str:
+                display_name = "guest"
+                if override_name is not None:
+                    display_name = override_name
+                return display_name
+            """
+        ),
+        Valid(
+            """
+            def f(default_value: object) -> dict[str, object]:
+                prompt_kwargs: dict[str, object] = {}
+                if default_value:
+                    prompt_kwargs["placeholder"] = str(default_value)
+                return prompt_kwargs
+            """
+        ),
+        Valid(
+            """
+            def f() -> None:
+                session = build_session()
+                session.refresh()
+                if session.is_stale():
+                    reset_session(session)
+                    return
+                cleanup()
+            """
+        ),
     ]
 
     def _assignment_run(
@@ -232,24 +261,6 @@ class BlockHeaderCuddleRelaxed(BaseBlockHeaderCuddleRule, LintRule):
                     merged[key] = value
 
                 return merged
-            """,
-            expected_message=MESSAGE,
-        ),
-        Invalid(
-            """
-            def f(default_value: object) -> object:
-                prompt_kwargs: dict[str, object] = {}
-                if default_value:
-                    prompt_kwargs["placeholder"] = str(default_value)
-                return prompt_kwargs
-            """,
-            expected_replacement="""
-            def f(default_value: object) -> object:
-                prompt_kwargs: dict[str, object] = {}
-
-                if default_value:
-                    prompt_kwargs["placeholder"] = str(default_value)
-                return prompt_kwargs
             """,
             expected_message=MESSAGE,
         ),
