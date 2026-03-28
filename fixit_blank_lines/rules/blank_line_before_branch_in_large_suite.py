@@ -6,7 +6,12 @@ import libcst as cst
 from rattle import Invalid, LintRule, RuleSetting, Valid
 
 from fixit_blank_lines.rules.base import BaseBlankLinesRule, validate_non_negative_int
-from fixit_blank_lines.utils import has_separator, is_branch_statement, prepend_blank_line
+from fixit_blank_lines.utils import (
+    has_separator,
+    is_branch_statement,
+    is_terminal_exception_cleanup_run,
+    prepend_blank_line,
+)
 
 
 class BlankLineBeforeBranchInLargeSuite(BaseBlankLinesRule, LintRule):
@@ -66,6 +71,42 @@ class BlankLineBeforeBranchInLargeSuite(BaseBlankLinesRule, LintRule):
                 return y
             """,
             options={"max_suite_non_empty_lines": 3},
+        ),
+        Valid(
+            """
+            async def f() -> None:
+                try:
+                    work()
+                except Exception:
+                    cleanup_a()
+                    cleanup_b()
+                    await cleanup_c()
+                    collector_id = None
+                    raise
+            """
+        ),
+        Valid(
+            """
+            async def f() -> None:
+                try:
+                    work()
+                except Exception:
+                    cleanup()
+                    state = None
+                    log_error()
+                    raise
+            """
+        ),
+        Valid(
+            """
+            async def f() -> None:
+                try:
+                    work()
+                finally:
+                    cleanup()
+                    log_teardown()
+                    return
+            """
         ),
     ]
     INVALID = [
@@ -130,12 +171,14 @@ class BlankLineBeforeBranchInLargeSuite(BaseBlankLinesRule, LintRule):
         self._check_suite_body(
             node.body,
             suite_can_have_docstring=self._suite_can_have_docstring(node),
+            suite_parent=self.get_metadata(cst.metadata.ParentNodeProvider, node),
         )
 
     def _check_suite_body(
         self,
         body: Sequence[cst.BaseStatement],
         suite_can_have_docstring: bool,
+        suite_parent: cst.CSTNode | None = None,
     ) -> None:
         if len(body) < 2:
             return
@@ -155,6 +198,9 @@ class BlankLineBeforeBranchInLargeSuite(BaseBlankLinesRule, LintRule):
                 continue
 
             if self._follows_suite_docstring(body, index, suite_can_have_docstring):
+                continue
+
+            if is_terminal_exception_cleanup_run(body, index - 1, suite_parent):
                 continue
 
             self.report(

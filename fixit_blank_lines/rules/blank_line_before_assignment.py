@@ -11,6 +11,7 @@ from fixit_blank_lines.utils import (
     assignment_small_statement,
     has_separator,
     is_control_block_statement,
+    is_terminal_exception_cleanup_run,
     prepend_blank_line,
 )
 
@@ -93,6 +94,31 @@ class BlankLineBeforeAssignment(BaseBlankLinesRule, LintRule):
                     last_status_time = loop.time()
             """,
             options={"short_control_flow_max_statements": 4},
+        ),
+        Valid(
+            """
+            async def f() -> None:
+                try:
+                    work()
+                except Exception:
+                    cleanup_a()
+                    cleanup_b()
+                    await cleanup_c()
+                    collector_id = None
+                    raise
+            """
+        ),
+        Valid(
+            """
+            async def f() -> None:
+                try:
+                    work()
+                except Exception:
+                    cleanup()
+                    state = None
+                    log_error()
+                    raise
+            """
         ),
     ]
     INVALID = [
@@ -189,6 +215,7 @@ class BlankLineBeforeAssignment(BaseBlankLinesRule, LintRule):
         self._check_suite_body(
             node.body,
             suite_can_have_docstring=self._suite_can_have_docstring(node),
+            suite_parent=parent,
             skip_short_control_flow_suite=(
                 is_control_block_statement(parent)
                 and len(node.body) <= short_control_flow_max_statements
@@ -200,6 +227,7 @@ class BlankLineBeforeAssignment(BaseBlankLinesRule, LintRule):
         body: Sequence[cst.BaseStatement],
         suite_can_have_docstring: bool,
         skip_short_control_flow_suite: bool,
+        suite_parent: cst.CSTNode | None = None,
     ) -> None:
         if skip_short_control_flow_suite:
             return
@@ -222,6 +250,9 @@ class BlankLineBeforeAssignment(BaseBlankLinesRule, LintRule):
                 continue
 
             if self._follows_suite_docstring(body, index, suite_can_have_docstring):
+                continue
+
+            if is_terminal_exception_cleanup_run(body, index, suite_parent):
                 continue
 
             self.report(

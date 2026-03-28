@@ -5,6 +5,7 @@ import libcst as cst
 BRANCH_SMALL_STATEMENTS = (cst.Break, cst.Continue, cst.Raise, cst.Return)
 HEADER_BLOCK_STATEMENTS = (cst.For, cst.If, cst.Match, cst.While, cst.With)
 CONTROL_BLOCK_STATEMENTS = (cst.For, cst.If, cst.Match, cst.Try, cst.While, cst.With)
+EXCEPTION_CLEANUP_PARENTS = (cst.ExceptHandler, cst.Finally)
 DOCSTRING_VALUE_NODES = (cst.ConcatenatedString, cst.SimpleString)
 
 
@@ -166,6 +167,27 @@ def is_header_block_statement(statement: cst.BaseStatement) -> bool:
 
 def is_control_block_statement(statement: cst.BaseStatement) -> bool:
     return isinstance(statement, CONTROL_BLOCK_STATEMENTS)
+
+
+def is_exception_cleanup_suite_parent(node: cst.CSTNode) -> bool:
+    return isinstance(node, EXCEPTION_CLEANUP_PARENTS)
+
+
+def is_terminal_exception_cleanup_run(
+    body: list[cst.BaseStatement] | tuple[cst.BaseStatement, ...],
+    start_index: int,
+    suite_parent: cst.CSTNode | None,
+) -> bool:
+    if suite_parent is None or not is_exception_cleanup_suite_parent(suite_parent):
+        return False
+
+    if start_index < 0 or start_index >= len(body):
+        return False
+
+    if not is_branch_statement(body[-1]):
+        return False
+
+    return all(isinstance(statement, cst.SimpleStatementLine) for statement in body[start_index:])
 
 
 def is_single_line_control_block(statement: cst.BaseStatement) -> bool:
