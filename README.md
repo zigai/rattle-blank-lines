@@ -6,8 +6,6 @@
 [![license](https://img.shields.io/github/license/zigai/rattle-blank-lines.svg)](https://github.com/zigai/rattle-blank-lines/blob/master/LICENSE)
 
 [Rattle](https://github.com/zigai/rattle) rules for blank-line and statement-cuddling policy checks in Python.
-The distribution and repository name are `rattle-blank-lines`.
-The Python package path is `rattle_blank_lines`.
 
 ## Installation
 
@@ -76,8 +74,6 @@ allow_with_immediate_inspection = true
 [tool.rattle.options.BL400]
 max_case_non_empty_lines = 2
 ```
-
-These are the default values.
 
 ## Rules
 
