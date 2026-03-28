@@ -30,6 +30,7 @@ enable = ["rattle_blank_lines.rules"]
 
 This adds the `rattle_blank_lines` rules.
 Rattle's built-in `rattle.rules` stay enabled unless you disable them.
+
 If you want to run only `rattle_blank_lines`, also set `disable = ["rattle.rules"]`.
 
 Run linting and autofix:
@@ -43,40 +44,6 @@ rattle fix <path>
 For in-file suppressions, use Rattle comments:
 - `# lint-ignore: RuleName`
 - `# lint-fixme: RuleName`
-
-## Configurable Rules
-
-Configure rules under `[tool.rattle.options]`.
-
-```toml
-[tool.rattle.options]
-
-[tool.rattle.options.BL200]
-max_suite_non_empty_lines = 2
-compact_tail_max_statements = 2
-allow_related_return_tails = true
-allow_guard_ladder_final_branch = true
-
-[tool.rattle.options.BL210]
-short_control_flow_max_statements = 3
-related_use_lookahead = 2
-allow_local_helper_capture = true
-allow_post_guard_continuation = true
-
-[tool.rattle.options.BL300]
-body_usage_lookahead = 4
-setup_run_lookback = 3
-allow_setup_before_compact_guard_ladder = true
-
-[tool.rattle.options.BL350]
-related_use_lookahead = 2
-allow_compact_guard_ladders = true
-allow_pytest_raises_clusters = true
-allow_with_immediate_inspection = true
-
-[tool.rattle.options.BL400]
-max_case_non_empty_lines = 2
-```
 
 ## Rules
 
@@ -244,6 +211,38 @@ def f(value: int) -> int:
             c = 3
         case _:
             return 0
+```
+
+## Rule Options
+
+```toml
+[tool.rattle.options]
+
+[tool.rattle.options.BL200]
+max_suite_non_empty_lines = 2
+compact_tail_max_statements = 2
+allow_related_return_tails = true
+allow_guard_ladder_final_branch = true
+
+[tool.rattle.options.BL210]
+short_control_flow_max_statements = 3
+related_use_lookahead = 2
+allow_local_helper_capture = true
+allow_post_guard_continuation = true
+
+[tool.rattle.options.BL300]
+body_usage_lookahead = 4
+setup_run_lookback = 3
+allow_setup_before_compact_guard_ladder = true
+
+[tool.rattle.options.BL350]
+related_use_lookahead = 2
+allow_compact_guard_ladders = true
+allow_pytest_raises_clusters = true
+allow_with_immediate_inspection = true
+
+[tool.rattle.options.BL400]
+max_case_non_empty_lines = 2
 ```
 
 After:
