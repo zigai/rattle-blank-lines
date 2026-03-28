@@ -1,8 +1,9 @@
 # rattle-blank-lines
 
+[![Tests](https://github.com/zigai/rattle-blank-lines/actions/workflows/tests.yml/badge.svg)](https://github.com/zigai/rattle-blank-lines/actions/workflows/tests.yml)
 [![PyPI version](https://badge.fury.io/py/rattle-blank-lines.svg)](https://badge.fury.io/py/rattle-blank-lines)
 ![Supported versions](https://img.shields.io/badge/python-3.12+-blue.svg)
-[![Downloads](https://img.shields.io/pypi/dm/rattle-blank-lines.svg)](https://pypistats.org/packages/rattle-blank-lines)
+[![Downloads](https://static.pepy.tech/badge/rattle-blank-lines)](https://pepy.tech/project/rattle-blank-lines)
 [![license](https://img.shields.io/github/license/zigai/rattle-blank-lines.svg)](https://github.com/zigai/rattle-blank-lines/blob/master/LICENSE)
 
 [Rattle](https://github.com/zigai/rattle) rules for blank-line and statement-cuddling policy checks in Python.
@@ -27,14 +28,16 @@ root = true
 enable = ["rattle_blank_lines.rules"]
 ```
 
-This enables the default rule pack. Rattle keeps its built-in `rattle.rules` enabled by default; add `disable = ["rattle.rules"]` if you want to run only this rule pack.
+This adds the `rattle_blank_lines` rules.
+Rattle's built-in `rattle.rules` stay enabled unless you disable them.
+If you want to run only `rattle_blank_lines`, also set `disable = ["rattle.rules"]`.
 
 Run linting and autofix:
 
 ```sh
 rattle lint <path>
 rattle lint --diff <path>
-rattle fix --automatic <path>
+rattle fix <path>
 ```
 
 For in-file suppressions, use Rattle comments:
