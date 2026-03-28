@@ -15,7 +15,9 @@ from rattle_blank_lines.utils import (
     is_docstring_statement,
     is_header_block_statement,
     last_assigned_name,
+    leading_block_body_statements,
     prepend_blank_line,
+    statement_reference_names,
 )
 
 
@@ -78,6 +80,7 @@ class BaseBlockHeaderCuddleRule(BaseBlankLinesRule):
 
     STRICT = False
     ALLOW_FIRST_BODY_USAGE = True
+    BODY_USAGE_LOOKAHEAD = 0
     MESSAGE = "BL300 Illegal cuddle before block header."
 
     def visit_Module(self, node: cst.Module) -> None:
@@ -142,9 +145,13 @@ class BaseBlockHeaderCuddleRule(BaseBlankLinesRule):
         if self._header_uses_name(block_statement, last_name):
             return True
 
-        return self.ALLOW_FIRST_BODY_USAGE and self._first_body_statement_uses_name(
-            block_statement, last_name
-        )
+        if self.ALLOW_FIRST_BODY_USAGE and self._first_body_statement_uses_name(
+            block_statement,
+            last_name,
+        ):
+            return True
+
+        return self._early_body_statement_uses_name(block_statement, last_name)
 
     def _assignment_run(
         self,
@@ -171,6 +178,19 @@ class BaseBlockHeaderCuddleRule(BaseBlankLinesRule):
             return False
 
         return name in collect_names(first_statement)
+
+    def _early_body_statement_uses_name(self, statement: cst.BaseStatement, name: str) -> bool:
+        if self.BODY_USAGE_LOOKAHEAD <= 0:
+            return False
+
+        for body_statement in leading_block_body_statements(
+            statement,
+            limit=self.BODY_USAGE_LOOKAHEAD,
+        ):
+            if name in statement_reference_names(body_statement):
+                return True
+
+        return False
 
 
 def validate_non_negative_int(value: object) -> object:

@@ -9,6 +9,7 @@ from rattle import Invalid, LintRule, RuleSetting, Valid
 from rattle_blank_lines.rules.base import BaseBlankLinesRule, validate_non_negative_int
 from rattle_blank_lines.utils import (
     assignment_small_statement,
+    has_nontrivial_related_use,
     has_separator,
     is_control_block_statement,
     is_terminal_exception_cleanup_run,
@@ -21,6 +22,7 @@ class BlankLineBeforeAssignment(BaseBlankLinesRule, LintRule):
 
     CODE = "BL210"
     ALIASES = ("BlankLineBeforeAssignment",)
+    RELATED_USE_LOOKAHEAD = 2
     MESSAGE = (
         "BL210 Missing blank line before assignment statement "
         "that follows a non-assignment statement."
@@ -118,6 +120,30 @@ class BlankLineBeforeAssignment(BaseBlankLinesRule, LintRule):
                     state = None
                     log_error()
                     raise
+            """
+        ),
+        Valid(
+            """
+            def f(output: object) -> None:
+                output.write("ok")
+                bar = output.bars["task"]
+                assert bar.n == 1
+            """
+        ),
+        Valid(
+            """
+            def f() -> None:
+                assert output.exists()
+                payload = json.loads(output.read_text())
+                assert "themes" in payload
+            """
+        ),
+        Valid(
+            """
+            def f(name: str | None) -> object:
+                configure_logging()
+                logger_name = "default" if name is None else name
+                return make_logger(logger_name)
             """
         ),
     ]
@@ -245,14 +271,12 @@ class BlankLineBeforeAssignment(BaseBlankLinesRule, LintRule):
             if has_separator(statement):
                 continue
 
-            previous_statement = body[index - 1]
-            if assignment_small_statement(previous_statement) is not None:
-                continue
-
-            if self._follows_suite_docstring(body, index, suite_can_have_docstring):
-                continue
-
-            if is_terminal_exception_cleanup_run(body, index, suite_parent):
+            if self._should_skip_assignment(
+                body,
+                index,
+                suite_can_have_docstring=suite_can_have_docstring,
+                suite_parent=suite_parent,
+            ):
                 continue
 
             self.report(
@@ -260,6 +284,30 @@ class BlankLineBeforeAssignment(BaseBlankLinesRule, LintRule):
                 message=self.MESSAGE,
                 replacement=prepend_blank_line(statement),
             )
+
+    def _should_skip_assignment(
+        self,
+        body: Sequence[cst.BaseStatement],
+        index: int,
+        *,
+        suite_can_have_docstring: bool,
+        suite_parent: cst.CSTNode | None,
+    ) -> bool:
+        previous_statement = body[index - 1]
+        if assignment_small_statement(previous_statement) is not None:
+            return True
+
+        if self._follows_suite_docstring(body, index, suite_can_have_docstring):
+            return True
+
+        if is_terminal_exception_cleanup_run(body, index, suite_parent):
+            return True
+
+        return has_nontrivial_related_use(
+            body,
+            index,
+            lookahead=self.RELATED_USE_LOOKAHEAD,
+        )
 
 
 __all__ = ["BlankLineBeforeAssignment"]

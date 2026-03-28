@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from itertools import pairwise
 
 import libcst as cst
 from rattle import Invalid, LintRule, Valid
 
 from rattle_blank_lines.rules.base import BaseBlankLinesRule
 from rattle_blank_lines.utils import (
+    assignment_small_statement,
+    control_block_ends_with_loop_exit,
+    has_nontrivial_related_use,
     has_separator,
     is_control_block_statement,
+    is_pass_only_try,
     is_same_subject_simple_if_chain,
     is_single_line_control_block,
     prepend_blank_line,
@@ -21,6 +24,7 @@ class BlankLineAfterControlBlock(BaseBlankLinesRule, LintRule):
 
     CODE = "BL350"
     ALIASES = ("BlankLineAfterControlBlock",)
+    RELATED_USE_LOOKAHEAD = 2
     MESSAGE = "BL350 Missing blank line after multiline control-flow block statement."
 
     VALID = [
@@ -60,6 +64,27 @@ class BlankLineAfterControlBlock(BaseBlankLinesRule, LintRule):
                     return _load_yaml_text(text)
 
                 raise ValueError(format_name)
+            """
+        ),
+        Valid(
+            """
+            def normalize(parts: list[str], values: list[str]) -> None:
+                for part in values:
+                    if part == "..":
+                        parts.pop()
+                        continue
+                    parts.append(part)
+            """
+        ),
+        Valid(
+            """
+            def render(parser: object, capsys: object) -> object:
+                try:
+                    parser.run()
+                except SystemExit:
+                    pass
+                out = capsys.readouterr()
+                return out
             """
         ),
     ]
@@ -133,7 +158,10 @@ class BlankLineAfterControlBlock(BaseBlankLinesRule, LintRule):
         if len(body) < 2:
             return
 
-        for current_statement, next_statement in pairwise(body):
+        for index in range(len(body) - 1):
+            current_statement = body[index]
+            next_statement = body[index + 1]
+
             if not is_control_block_statement(current_statement):
                 continue
 
@@ -144,6 +172,23 @@ class BlankLineAfterControlBlock(BaseBlankLinesRule, LintRule):
                 continue
 
             if has_separator(next_statement):
+                continue
+
+            if assignment_small_statement(
+                next_statement
+            ) is not None and has_nontrivial_related_use(
+                body,
+                index + 1,
+                lookahead=self.RELATED_USE_LOOKAHEAD,
+            ):
+                continue
+
+            if control_block_ends_with_loop_exit(current_statement):
+                continue
+
+            if is_pass_only_try(current_statement) and isinstance(
+                next_statement, cst.SimpleStatementLine
+            ):
                 continue
 
             self.report(

@@ -14,6 +14,7 @@ class BlockHeaderCuddleRelaxed(BaseBlockHeaderCuddleRule, LintRule):
     CODE = "BL300"
     ALIASES = ("BlockHeaderCuddleRelaxed",)
     STRICT = False
+    BODY_USAGE_LOOKAHEAD = 4
     MESSAGE = (
         "BL300 Illegal cuddle before block header. "
         "The immediately previous assignment must feed the block header or first body statement."
@@ -73,6 +74,19 @@ class BlockHeaderCuddleRelaxed(BaseBlockHeaderCuddleRule, LintRule):
 
                 return 0
             '''
+        ),
+        Valid(
+            """
+            def f(base: dict[str, object], override: dict[str, object]) -> dict[str, object]:
+                merged = dict(base)
+                for key, value in override.items():
+                    if key not in merged:
+                        merged[key] = value
+                        continue
+                    merged[key] = value
+
+                return merged
+            """
         ),
     ]
 
@@ -145,6 +159,34 @@ class BlockHeaderCuddleRelaxed(BaseBlockHeaderCuddleRule, LintRule):
                     return prepared
 
                 return 0
+            """,
+            expected_message=MESSAGE,
+        ),
+        Invalid(
+            """
+            def f(base: dict[str, object], override: dict[str, object]) -> dict[str, object]:
+                merged = dict(base)
+                for key, value in override.items():
+                    log_key(key)
+                    audit(value)
+                    publish(key, value)
+                    notify_team(key)
+                    merged[key] = value
+
+                return merged
+            """,
+            expected_replacement="""
+            def f(base: dict[str, object], override: dict[str, object]) -> dict[str, object]:
+                merged = dict(base)
+
+                for key, value in override.items():
+                    log_key(key)
+                    audit(value)
+                    publish(key, value)
+                    notify_team(key)
+                    merged[key] = value
+
+                return merged
             """,
             expected_message=MESSAGE,
         ),
