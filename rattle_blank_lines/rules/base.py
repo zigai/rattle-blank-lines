@@ -433,11 +433,33 @@ class BaseBlockHeaderCuddleRule(BaseBlankLinesRule):
         if block_index <= 0:
             return False
 
-        previous_expression = expression_statement_value(body[block_index - 1])
-        if previous_expression is None:
+        previous_statement = body[block_index - 1]
+        previous_expressions: list[cst.BaseExpression] = []
+
+        previous_expression = expression_statement_value(previous_statement)
+        if previous_expression is not None:
+            previous_expressions.append(previous_expression)
+
+        assignment = assignment_small_statement(previous_statement)
+        if isinstance(assignment, cst.Assign):
+            previous_expressions.append(assignment.value)
+            previous_expressions.extend(target.target for target in assignment.targets)
+        elif isinstance(assignment, cst.AnnAssign):
+            previous_expressions.append(assignment.target)
+            if assignment.value is not None:
+                previous_expressions.append(assignment.value)
+        elif isinstance(assignment, cst.AugAssign):
+            previous_expressions.append(assignment.target)
+            previous_expressions.append(assignment.value)
+
+        if not previous_expressions:
             return False
 
-        previous_receivers = collect_attribute_receivers(previous_expression)
+        previous_receivers = [
+            receiver
+            for expression in previous_expressions
+            for receiver in collect_attribute_receivers(expression)
+        ]
         if not previous_receivers:
             return False
 
