@@ -5,7 +5,7 @@ description = "Reusable Rattle rules for blank-line and statement cuddling polic
 authors = [{ name = "zigai", email = "ziga.ivansek@gmail.com" }]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = ["rattle-lint>=1.0.4"]
 
 classifiers = [
@@ -17,6 +17,8 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
@@ -50,7 +52,7 @@ features = ["test"]
 installer = "uv"
 
 [[tool.hatch.envs.test.matrix]]
-python = ["3.12", "3.13", "3.14"]
+python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
 [tool.hatch.envs.test.scripts]
 test = "pytest {args}"
@@ -73,7 +75,7 @@ exclude_lines = [
 omit = ["tests/*", "tests/**"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.10"
 files = ["rattle_blank_lines"]
 exclude = ["^tests/"]
 
@@ -225,4 +227,4 @@ skip = '.git,uv.lock'
 root = true
 enable = ["rattle_blank_lines.rules"]
 disable = ["rattle.rules"]
-python-version = "3.12"
+python-version = "3.10"
