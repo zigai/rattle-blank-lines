@@ -20,7 +20,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: pyproject.toml
       - name: Set up Python
-        run: uv python install 3.12
+        run: uv python install 3.10
       - name: Build and publish
         env:
           TWINE_USERNAME: __token__
