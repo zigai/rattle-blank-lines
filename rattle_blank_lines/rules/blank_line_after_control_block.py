@@ -9,16 +9,20 @@ from rattle_blank_lines.rules.base import BaseBlankLinesRule, validate_non_negat
 from rattle_blank_lines.utils import (
     assignment_small_statement,
     control_block_ends_with_loop_exit,
+    flat_body_assigned_names,
     has_nontrivial_related_use,
     has_separator,
+    is_branch_statement,
     is_compact_guard_if,
     is_control_block_statement,
+    is_header_block_statement,
     is_pass_only_try,
     is_pytest_raises_with,
     is_same_subject_simple_if_chain,
     is_single_line_control_block,
     next_statement_inspects_with_assignment,
     prepend_blank_line,
+    statement_reference_names,
 )
 
 
@@ -118,12 +122,43 @@ class BlankLineAfterControlBlock(BaseBlankLinesRule, LintRule):
         ),
         Valid(
             """
+            def f(width: int | None, columns: list[str]) -> list[str]:
+                if width is not None:
+                    template = f"{width:02d}"
+                    columns.append(template)
+                columns.append(template if width is not None else "default")
+                return columns
+            """
+        ),
+        Valid(
+            """
+            def f(flag: bool, label: str) -> str:
+                if not flag:
+                    return label
+                cleaned = label.strip()
+                return cleaned
+            """
+        ),
+        Valid(
+            """
             def f(shell_name: str, interactive: bool) -> list[str]:
                 if shell_name == "zsh":
                     return ["-lic"]
                 if interactive:
                     return ["-ic"]
+
                 return ["-lc"]
+            """
+        ),
+        Valid(
+            """
+            def f(primary: str | None, fallback: str | None) -> str:
+                if primary is not None:
+                    return primary
+                if fallback is not None:
+                    return fallback
+
+                return "guest"
             """
         ),
     ]
@@ -171,7 +206,6 @@ class BlankLineAfterControlBlock(BaseBlankLinesRule, LintRule):
                     return value
                 if other > 0:
                     return other
-
                 return 0
             """,
             expected_replacement="""
@@ -180,11 +214,26 @@ class BlankLineAfterControlBlock(BaseBlankLinesRule, LintRule):
                     log(value)
                     audit(value)
                     return value
-
                 if other > 0:
                     return other
 
                 return 0
+            """,
+            expected_message=MESSAGE,
+        ),
+        Invalid(
+            """
+            def f(flag: bool, label: str) -> str:
+                if not flag:
+                    return label
+                return label.strip()
+            """,
+            expected_replacement="""
+            def f(flag: bool, label: str) -> str:
+                if not flag:
+                    return label
+
+                return label.strip()
             """,
             expected_message=MESSAGE,
         ),
@@ -225,10 +274,13 @@ class BlankLineAfterControlBlock(BaseBlankLinesRule, LintRule):
         return (
             not is_control_block_statement(current_statement)
             or is_single_line_control_block(current_statement)
+            or is_header_block_statement(next_statement)
+            or assignment_small_statement(next_statement) is not None
             or is_same_subject_simple_if_chain(current_statement, next_statement)
             or has_separator(next_statement)
             or self._is_pytest_raises_cluster(current_statement, next_statement)
             or self._is_compact_guard_transition(current_statement, next_statement)
+            or self._is_related_simple_fallthrough(current_statement, next_statement)
             or self._is_with_immediate_inspection(current_statement, next_statement)
             or self._is_related_assignment_fallthrough(body, index, next_statement)
             or control_block_ends_with_loop_exit(current_statement)
@@ -257,14 +309,7 @@ class BlankLineAfterControlBlock(BaseBlankLinesRule, LintRule):
         if not self._allow_compact_guard_ladders() or not is_compact_guard_if(current_statement):
             return False
 
-        if is_compact_guard_if(next_statement):
-            return True
-
-        return (
-            isinstance(next_statement, cst.SimpleStatementLine)
-            and len(next_statement.body) == 1
-            and isinstance(next_statement.body[0], (cst.Raise, cst.Return, cst.Break, cst.Continue))
-        )
+        return is_compact_guard_if(next_statement)
 
     def _is_with_immediate_inspection(
         self,
@@ -276,12 +321,34 @@ class BlankLineAfterControlBlock(BaseBlankLinesRule, LintRule):
             next_statement,
         )
 
+    def _is_related_simple_fallthrough(
+        self,
+        current_statement: cst.BaseStatement,
+        next_statement: cst.BaseStatement,
+    ) -> bool:
+        if (
+            is_compact_guard_if(current_statement)
+            or is_branch_statement(next_statement)
+            or assignment_small_statement(next_statement) is not None
+            or not isinstance(next_statement, cst.SimpleStatementLine)
+        ):
+            return False
+
+        assigned = flat_body_assigned_names(current_statement)
+        if not assigned:
+            return False
+
+        return bool(statement_reference_names(next_statement).intersection(assigned))
+
     def _is_related_assignment_fallthrough(
         self,
         body: Sequence[cst.BaseStatement],
         index: int,
         next_statement: cst.BaseStatement,
     ) -> bool:
+        if is_compact_guard_if(body[index]):
+            return False
+
         return assignment_small_statement(
             next_statement
         ) is not None and has_nontrivial_related_use(
