@@ -219,6 +219,37 @@ def test_bl200_allows_typed_result_binding_immediately_before_return() -> None:
     assert reports == []
 
 
+def test_bl100_allows_ruff_style_blank_line_before_nested_loop_handler() -> None:
+    _, reports = _run_rule(
+        NoSuiteLeadingTrailingBlankLines,
+        """
+        def f(keys: str) -> None:
+            for key in keys:
+
+                @register(key)
+                def handle() -> None:
+                    print(key)
+        """,
+    )
+
+    assert reports == []
+
+
+def test_bl100_keeps_class_body_compact_at_suite_start() -> None:
+    _, reports = _run_rule(
+        NoSuiteLeadingTrailingBlankLines,
+        """
+        class Handler:
+
+            def handle(self) -> None:
+                print("x")
+        """,
+    )
+
+    assert len(reports) == 1
+    assert reports[0].message == NoSuiteLeadingTrailingBlankLines.LEADING_MESSAGE
+
+
 def test_bl210_reports_first_line_of_multiline_assignment() -> None:
     _, reports = _run_rule(
         BlankLineBeforeAssignment,
@@ -266,6 +297,22 @@ def test_default_rule_pack_converges_after_guard_to_assignment_fix() -> None:
 
     _, fixed_reports = _run_rules(DEFAULT_RULE_PACK, fixed_code)
     assert fixed_reports == []
+
+
+def test_default_rule_pack_allows_ruff_style_nested_definition_at_loop_start() -> None:
+    _, reports = _run_rules(
+        DEFAULT_RULE_PACK,
+        """
+        def f(digits: str) -> None:
+            for digit in digits:
+
+                @register(digit)
+                def handle() -> None:
+                    print(digit)
+        """,
+    )
+
+    assert reports == []
 
 
 def test_default_rule_pack_converges_after_nested_loop_tail_return() -> None:
