@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/zigai/rattle-blank-lines/actions/workflows/tests.yml/badge.svg)](https://github.com/zigai/rattle-blank-lines/actions/workflows/tests.yml)
 [![PyPI version](https://badge.fury.io/py/rattle-blank-lines.svg)](https://badge.fury.io/py/rattle-blank-lines)
-![Supported versions](https://img.shields.io/badge/python-3.12+-blue.svg)
+![Supported versions](https://img.shields.io/badge/python-3.10+-blue.svg)
 [![Downloads](https://static.pepy.tech/badge/rattle-blank-lines)](https://pepy.tech/project/rattle-blank-lines)
 [![license](https://img.shields.io/github/license/zigai/rattle-blank-lines.svg)](https://github.com/zigai/rattle-blank-lines/blob/master/LICENSE)
 
