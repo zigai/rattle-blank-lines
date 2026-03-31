@@ -192,7 +192,6 @@ def f(value: int) -> int:
 
 ### BlankLineBeforeAssignment (BL210)
 Requires a blank line before an assignment after a non-assignment statement.
-Docstring-following assignments, same-receiver setup flows, short terminal return tails, and some compact follow-up flows stay together.
 
 Before:
 ```python
