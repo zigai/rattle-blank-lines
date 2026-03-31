@@ -299,6 +299,20 @@ def test_default_rule_pack_converges_after_guard_to_assignment_fix() -> None:
     assert fixed_reports == []
 
 
+def test_default_rule_pack_allows_compact_terminal_simple_return_tail() -> None:
+    _, reports = _run_rules(
+        DEFAULT_RULE_PACK,
+        """
+        def f() -> int:
+            log_start()
+            value = compute()
+            return value
+        """,
+    )
+
+    assert reports == []
+
+
 def test_default_rule_pack_allows_ruff_style_nested_definition_at_loop_start() -> None:
     _, reports = _run_rules(
         DEFAULT_RULE_PACK,
